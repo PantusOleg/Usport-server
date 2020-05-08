@@ -1,0 +1,8 @@
+/node_modules
+
+yarn.lock
+yarn-error.log
+
+/src/core/mailer/mailer.log
+/src/core/db/mongo.log
+/.env
