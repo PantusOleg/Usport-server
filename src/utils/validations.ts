@@ -6,8 +6,10 @@ const isBoolean = validator.isBoolean
 function checkMainUserInfo() {
     return [
         check("email").notEmpty().isEmail().withMessage("Enter correct email"),
+        check("userName").notEmpty().isString().isLength({min: 5, max: 15})
+            .withMessage("User name should be a string more than 5 and less than 15 symbols"),
         check("fullName").notEmpty().isString().isLength({min: 5, max: 20})
-            .withMessage("Full name should be a string more that 5 and less that 20 symbols"),
+            .withMessage("Full name should be a string more than 5 and less than 20 symbols"),
 
         check("birthDate").notEmpty().custom(birthDate => {
             const date = new Date(+birthDate)
@@ -23,7 +25,7 @@ const validations = checkMainUserInfo()
 export const registerValidation = [
     ...validations,
     check("password").notEmpty().isString().isLength({min: 6, max: 15})
-        .withMessage("Password should be a string more that 6 and less than 15 symbols"),
+        .withMessage("Password should be a string more than 6 and less than 15 symbols"),
     check("sports").notEmpty().isArray().withMessage("Sports should be an array of strings"),
 ]
 
@@ -34,7 +36,8 @@ export const updateValidation = [
         else return true
     }),
     check("about").custom(about => {
-        if (about && typeof about !== "string") return Promise.reject("About field must to be string")
+        if (about && typeof about !== "string" && about.trim().length <= 100)
+            return Promise.reject("About field must to be string less that 100")
         else return true
     })
 ]

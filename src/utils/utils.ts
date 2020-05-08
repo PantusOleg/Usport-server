@@ -23,8 +23,8 @@ export const isRequired = (val: string) => `${val} is required`
 
 export const generateHash = (str: string): Promise<string> =>
     new Promise((resolve, reject) => {
-        resolve(bcrypt.hash(str, 10, function (err, hash) {
+        bcrypt.hash(str, 10, function (err, hash) {
             if (err) return reject(err)
-            return hash
-        }))
+            resolve(hash)
+        })
     })

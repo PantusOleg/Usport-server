@@ -3,6 +3,7 @@ import {Request, Response} from "express"
 import {UserModel} from "../models/User"
 import {errorRes, successRes} from "../utils/utils"
 import {validationResult} from "express-validator"
+import {sendVerifyMessage} from "../core/mailer/mailer";
 
 class UserService implements BaseService {
 
@@ -30,8 +31,13 @@ class UserService implements BaseService {
             if (user.length > 0) return errorRes(res, 400, "This email is already used")
         })
 
+        UserModel.find({userName: req.body.userName}, (err, user) => {
+            if (user.length > 0) return errorRes(res, 400, "This username is already used")
+        })
+
         const newUser = {
             email: req.body.email,
+            userName: req.body.userName,
             fullName: req.body.fullName,
             sports: req.body.sports,
             password: req.body.password,
@@ -43,16 +49,7 @@ class UserService implements BaseService {
 
             successRes(res, user)
 
-            /*mailer.sendMail({
-                    from: "admin@usport.com",
-                    to: newUser.email,
-                    subject: "Verifying your email in Usport",
-                    text: user.confirmHash
-                },
-                (err, info) => {
-                    if (err) fs.appendFile("src/core/mailer/mailer.log", err.message, () => null)
-                    else console.log(info)
-                })*/
+            //sendVerifyMessage(user.email, user.confirmHash)
         } catch (err) {
             errorRes(res, 500, "Can't create user. Try again!")
         }

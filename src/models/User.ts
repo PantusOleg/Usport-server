@@ -8,6 +8,7 @@ import {differenceInMinutes} from "date-fns"
 
 interface UserSchema extends Document {
     email: string
+    userName: string
     avatar: string
     fullName: string
     about: string
@@ -32,6 +33,11 @@ const UserSchema = new Schema({
         type: String,
         required: isRequired("Email"),
         validate: [isEmail, "Invalid email"],
+        unique: true
+    },
+    userName: {
+        type: String,
+        required: isRequired("UserName"),
         unique: true
     },
     avatar: String,
@@ -76,7 +82,7 @@ UserSchema.pre<IUser>("save", async function (next) {
 
     try {
         this.password = await generateHash(this.password)
-        this.confirmHash = await generateHash(Date.now().toString())
+        this.confirmHash = await generateHash(Date.now().toString().slice(0, 7))
     } catch (err) {
         console.log(err.message || err)
     }
