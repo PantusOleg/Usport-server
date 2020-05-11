@@ -3,16 +3,12 @@ import {Request, Response} from "express"
 import {UserModel} from "../models/User"
 import {errorRes, successRes} from "../utils/utils"
 import {validationResult} from "express-validator"
-import {sendVerifyMessage} from "../core/mailer/mailer";
+import {createToken} from "../utils/jwtControl"
 
 class UserService implements BaseService {
 
     getById = (req: Request, res: Response) => {
         const {id} = req.body
-
-        const errors = validationResult(req)
-
-        if (!errors.isEmpty()) return errorRes(res, 422, JSON.stringify(errors.array()[0].msg))
 
         UserModel.findById(id, (err, user) => {
             if (err || !user) return errorRes(res, 404, "User is not found")
@@ -25,7 +21,7 @@ class UserService implements BaseService {
 
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, JSON.stringify(errors.array()[0].msg))
+        if (!errors.isEmpty()) return errorRes(res, 422, undefined, errors.array()[0])
 
         UserModel.find({email: req.body.email}, (err, user) => {
             if (user.length > 0) return errorRes(res, 400, "This email is already used")
@@ -63,7 +59,7 @@ class UserService implements BaseService {
         UserModel.findById(id, async (err, user) => {
             if (err || !user) return errorRes(res, 404, "User is not found")
 
-            if (UserModel.comparePasswords(user.id, password)) {
+            if (await UserModel.comparePasswords(user.id, password)) {
                 try {
                     await user.remove()
                     return successRes(res, null, "User is deleted")
@@ -74,10 +70,10 @@ class UserService implements BaseService {
         })
     }
 
-    update(req: Request, res: Response) {
+    update = (req: Request, res: Response) => {
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, JSON.stringify(errors.array()[0].msg))
+        if (!errors.isEmpty()) return errorRes(res, 422, undefined, errors.array()[0])
 
         const user = req.body
 
@@ -85,6 +81,28 @@ class UserService implements BaseService {
             if (err || !newUser) return errorRes(res, 404, "User not found or not updated")
 
             successRes(res, newUser)
+        })
+    }
+
+    login = (req: Request, res: Response) => {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) return errorRes(res, 404, undefined, errors.array()[0])
+
+        const loginData = {
+            email: req.body.email,
+            password: req.body.password
+        }
+
+        UserModel.findOne({email: loginData.email}, async (err, user) => {
+            if (err || !user) return errorRes(res, 403, "Incorrect email or password")
+
+            if (await UserModel.comparePasswords(user.id, loginData.password)) {
+                const token = createToken(loginData)
+
+                successRes(res, {user, token: token})
+            } else
+                errorRes(res, 403, "Incorrect email or password")
         })
     }
 

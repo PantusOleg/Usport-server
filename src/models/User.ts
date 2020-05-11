@@ -1,10 +1,9 @@
-import {Document, Model, Schema} from "mongoose"
+import mongoose, {Document, Model, Schema} from "mongoose"
 import validator from "validator"
-import mongoose from "mongoose"
 import bcrypt from "bcrypt"
-import isEmail = validator.isEmail
 import {generateHash, isRequired} from "../utils/utils"
 import {differenceInMinutes} from "date-fns"
+import isEmail = validator.isEmail;
 
 interface UserSchema extends Document {
     email: string
@@ -25,10 +24,10 @@ export interface IUser extends UserSchema {
 }
 
 interface IUserModel extends Model<IUser> {
-    comparePasswords(id: string, password: string): boolean
+    comparePasswords(id: string, password: string): Promise<boolean>
 }
 
-const UserSchema = new Schema({
+const UserSchema = new Schema<IUser>({
     email: {
         type: String,
         required: isRequired("Email"),
@@ -53,7 +52,6 @@ const UserSchema = new Schema({
     password: {
         type: String,
         required: isRequired("Password"),
-        select: false,
     },
     lastSeen: {
         type: Date,
@@ -88,11 +86,13 @@ UserSchema.pre<IUser>("save", async function (next) {
     }
 })
 
-UserSchema.statics.comparePasswords = async function (id: string, password: string) {
+UserSchema.statics.comparePasswords = async function (id: string, inputPassword: string) {
     try {
-        return await bcrypt.compareSync(password, this.findById(id).password)
+        const {password} = await this.findById(id)
+
+        return bcrypt.compareSync(inputPassword, password)
     } catch (err) {
-        return new Error("Error with comparing passwords")
+        return false
     }
 }
 

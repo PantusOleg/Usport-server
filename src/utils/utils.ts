@@ -1,17 +1,23 @@
 import bcrypt from "bcrypt"
 import {Response} from "express"
 
-interface SuccessObjType {
-    status: "success"
+interface ResObjType<S extends string> {
+    status: S
     data?: any
     message?: string
 }
 
-export const errorRes = (res: Response, status: number, message: string) =>
-    res.status(status).json({status: "error", message})
+export const errorRes = (res: Response, status: number, message?: string, data?: any) => {
+    let obj: ResObjType<"error"> = {status: "error"}
+
+    if (data) obj.data = data
+    if (message) obj.message = message
+
+    res.status(status).json(obj)
+}
 
 export const successRes = (res: Response, data?: any, message?: string) => {
-    const obj: SuccessObjType = {status: "success"}
+    let obj: ResObjType<"success"> = {status: "success"}
 
     if (data) obj.data = data
     if (message) obj.message = message
@@ -22,8 +28,8 @@ export const successRes = (res: Response, data?: any, message?: string) => {
 export const isRequired = (val: string) => `${val} is required`
 
 export const generateHash = (str: string): Promise<string> =>
-    new Promise((resolve, reject) => {
-        bcrypt.hash(str, 10, function (err, hash) {
+    new Promise(async (resolve, reject) => {
+        await bcrypt.hash(str, 10, function (err, hash) {
             if (err) return reject(err)
             resolve(hash)
         })
