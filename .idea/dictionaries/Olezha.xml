@@ -5,6 +5,7 @@
       <w>dotenv</w>
       <w>nodemailer</w>
       <w>usport</w>
+      <w>virtuals</w>
     </words>
   </dictionary>
 </component>

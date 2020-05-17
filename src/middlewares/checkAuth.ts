@@ -13,7 +13,6 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
         await verifyToken(token)
         next()
     } catch (err) {
-        console.log(err)
         errorRes(res, 403, err.message)
     }
 }

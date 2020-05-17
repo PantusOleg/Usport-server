@@ -26,7 +26,7 @@ export const registerValidation = [
     ...validations,
     check("password").notEmpty().isString().isLength({min: 6, max: 15})
         .withMessage("Password should be a string more than 6 and less than 15 symbols"),
-    check("sports").notEmpty().isArray().withMessage("Sports should be an array of strings"),
+    check("sports").notEmpty().isArray().withMessage("Sports should be an array of numbers"),
 ]
 
 export const updateValidation = [

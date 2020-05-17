@@ -3,7 +3,7 @@ import validator from "validator"
 import bcrypt from "bcrypt"
 import {generateHash, isRequired} from "../utils/utils"
 import {differenceInMinutes} from "date-fns"
-import isEmail = validator.isEmail;
+import isEmail = validator.isEmail
 
 interface UserSchema extends Document {
     email: string
@@ -11,12 +11,20 @@ interface UserSchema extends Document {
     avatar: string
     fullName: string
     about: string
-    sports: Array<string>
+    sports: Array<Sports>
     password: string
     lastSeen: Date
+    isOnline: boolean
     confirmed: boolean
     confirmHash: string
     birthDate: Date
+}
+
+export enum Sports {
+    VOLLEYBALL,
+    BASKETBALL,
+    FOOTBALL,
+    TENNIS
 }
 
 export interface IUser extends UserSchema {
@@ -48,10 +56,11 @@ const UserSchema = new Schema<IUser>({
         type: String,
         maxlength: 100
     },
-    sports: [String],
+    sports: [Number],
     password: {
         type: String,
         required: isRequired("Password"),
+        select: false
     },
     lastSeen: {
         type: Date,
@@ -66,7 +75,7 @@ const UserSchema = new Schema<IUser>({
         type: Date,
         required: isRequired("Birth date")
     },
-})
+}, {versionKey: false})
 
 UserSchema.virtual("isOnline").get(function (this: UserSchema) {
     return differenceInMinutes(Date.now(), this.lastSeen) < 5
@@ -88,7 +97,7 @@ UserSchema.pre<IUser>("save", async function (next) {
 
 UserSchema.statics.comparePasswords = async function (id: string, inputPassword: string) {
     try {
-        const {password} = await this.findById(id)
+        const {password} = await this.findById(id).select("password")
 
         return bcrypt.compareSync(inputPassword, password)
     } catch (err) {

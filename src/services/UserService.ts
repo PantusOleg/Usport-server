@@ -21,7 +21,7 @@ class UserService implements BaseService {
 
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, undefined, errors.array()[0])
+        if (!errors.isEmpty()) return errorRes(res, 422, errors.array()[0].msg)
 
         UserModel.find({email: req.body.email}, (err, user) => {
             if (user.length > 0) return errorRes(res, 400, "This email is already used")
@@ -42,12 +42,13 @@ class UserService implements BaseService {
 
         try {
             const user = await new UserModel(newUser).save()
+            const token = createToken(user.email)
 
-            successRes(res, user)
+            successRes(res, {user, token})
 
             //sendVerifyMessage(user.email, user.confirmHash)
         } catch (err) {
-            errorRes(res, 500, "Can't create user. Try again!")
+            return errorRes(res, 500, "Can't create user. Try again!")
         }
     }
 
@@ -73,7 +74,7 @@ class UserService implements BaseService {
     update = (req: Request, res: Response) => {
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, undefined, errors.array()[0])
+        if (!errors.isEmpty()) return errorRes(res, 422, errors.array()[0].msg)
 
         const user = req.body
 
@@ -85,9 +86,10 @@ class UserService implements BaseService {
     }
 
     login = (req: Request, res: Response) => {
+        console.log(req.body)
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 404, undefined, errors.array()[0])
+        if (!errors.isEmpty()) return errorRes(res, 404, errors.array()[0].msg)
 
         const loginData = {
             email: req.body.email,
@@ -96,11 +98,10 @@ class UserService implements BaseService {
 
         UserModel.findOne({email: loginData.email}, async (err, user) => {
             if (err || !user) return errorRes(res, 403, "Incorrect email or password")
-
             if (await UserModel.comparePasswords(user.id, loginData.password)) {
-                const token = createToken(loginData)
+                const token = createToken(loginData.email)
 
-                successRes(res, {user, token: token})
+                successRes(res, {user, token})
             } else
                 errorRes(res, 403, "Incorrect email or password")
         })

@@ -1,23 +1,18 @@
 import bcrypt from "bcrypt"
 import {Response} from "express"
 
-interface ResObjType<S extends string> {
-    status: S
+interface ResObjType {
+    status: string
     data?: any
     message?: string
 }
 
-export const errorRes = (res: Response, status: number, message?: string, data?: any) => {
-    let obj: ResObjType<"error"> = {status: "error"}
+export const errorRes = (res: Response, status: number, message?: string) =>
+    res.status(status).json({status, message})
 
-    if (data) obj.data = data
-    if (message) obj.message = message
-
-    res.status(status).json(obj)
-}
 
 export const successRes = (res: Response, data?: any, message?: string) => {
-    let obj: ResObjType<"success"> = {status: "success"}
+    let obj: ResObjType = {status: "success"}
 
     if (data) obj.data = data
     if (message) obj.message = message
