@@ -42,7 +42,7 @@ class UserService implements BaseService {
 
         try {
             const user = await new UserModel(newUser).save()
-            const token = createToken(user.email)
+            const token = createToken(user.id)
 
             successRes(res, {user, token})
 
@@ -86,7 +86,6 @@ class UserService implements BaseService {
     }
 
     login = (req: Request, res: Response) => {
-        console.log(req.body)
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) return errorRes(res, 404, errors.array()[0].msg)
@@ -99,7 +98,7 @@ class UserService implements BaseService {
         UserModel.findOne({email: loginData.email}, async (err, user) => {
             if (err || !user) return errorRes(res, 403, "Incorrect email or password")
             if (await UserModel.comparePasswords(user.id, loginData.password)) {
-                const token = createToken(loginData.email)
+                const token = createToken(user.id)
 
                 successRes(res, {user, token})
             } else

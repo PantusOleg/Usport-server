@@ -2,7 +2,11 @@ import {Request, Response, NextFunction} from "express"
 import {verifyToken} from "../utils/jwtControl"
 import {errorRes} from "../utils/utils"
 
-export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
+export interface ReqWithUserId extends Request {
+    userId: string
+}
+
+export const checkAuth = async (req: ReqWithUserId, res: Response, next: NextFunction) => {
     if (req.path === "/api/user/create" || req.path === "/api/user/login") {
         return next()
     }
@@ -10,7 +14,9 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
     try {
         const token = req.headers.token as string
 
-        await verifyToken(token)
+        const {id} = await verifyToken(token) as { id: string }
+        if (req.url === "/api/event/delete") req.userId = id
+
         next()
     } catch (err) {
         errorRes(res, 403, err.message)

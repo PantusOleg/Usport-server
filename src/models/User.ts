@@ -8,7 +8,7 @@ import isEmail = validator.isEmail
 interface UserSchema extends Document {
     email: string
     userName: string
-    avatar: string
+    avatar?: string
     fullName: string
     about: string
     sports: Array<Sports>
@@ -16,7 +16,7 @@ interface UserSchema extends Document {
     lastSeen: Date
     isOnline: boolean
     confirmed: boolean
-    confirmHash: string
+    confirmHash?: string
     birthDate: Date
 }
 
@@ -56,7 +56,7 @@ const UserSchema = new Schema<IUser>({
         type: String,
         maxlength: 100
     },
-    sports: [Number],
+    sports: [Sports],
     password: {
         type: String,
         required: isRequired("Password"),
