@@ -4,7 +4,7 @@ import dotenv from "dotenv"
 dotenv.config()
 
 import "./core/db/db"
-import {useRoutes} from "./core/routes/router"
+import {useRoutes} from "./core/router"
 
 const app = express()
 

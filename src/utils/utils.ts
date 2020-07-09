@@ -8,8 +8,10 @@ interface ResObjType {
 }
 
 export const errorRes = (res: Response, status: number, message?: string) =>
-    res.status(status).json({status, message})
+    res.status(status).json({status: "error", message})
 
+export const warningRes = (res: Response, message: string) =>
+    res.json({status: "error", message})
 
 export const successRes = (res: Response, data?: any, message?: string) => {
     let obj: ResObjType = {status: "success"}

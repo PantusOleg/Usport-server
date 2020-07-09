@@ -56,7 +56,7 @@ const UserSchema = new Schema<IUser>({
         type: String,
         maxlength: 100
     },
-    sports: [Sports],
+    sports: [Number],
     password: {
         type: String,
         required: isRequired("Password"),
@@ -98,7 +98,6 @@ UserSchema.pre<IUser>("save", async function (next) {
 UserSchema.statics.comparePasswords = async function (id: string, inputPassword: string) {
     try {
         const {password} = await this.findById(id).select("password")
-
         return bcrypt.compareSync(inputPassword, password)
     } catch (err) {
         return false

@@ -1,9 +1,10 @@
 import {Document, model, Schema} from "mongoose"
 import {isRequired} from "../utils/utils"
 import {IUser, Sports} from "./User"
+import {IFile} from "./File"
 
 interface IEvent extends Document {
-    creator: string | IUser
+    creator: IUser
     title: string
     description: string
     location: {
@@ -12,11 +13,12 @@ interface IEvent extends Document {
         latitudeDelta: number
         longitudeDelta: number
     }
-    sports?: Array<Sports>,
+    sports?: Array<Sports>
+    likesCount: number
     filterMembers: boolean
-    photo?: Buffer
+    attachments?: Array<string| IFile>
     date: Date
-    members?: Array<IUser>
+    members?: Array<string | IUser>
     maxMembersCount?: number
 }
 
@@ -42,9 +44,15 @@ const EventSchema = new Schema<IEvent>({
         },
         required: isRequired("Location")
     },
-    sports: [Sports],
+    sports: [Number],
+    likesCount: {
+        type: Number,
+        default: 0
+    },
     filterMembers: Boolean,
-    photo: Buffer,
+    attachments: [{
+        type: Schema.Types.ObjectId, ref: "File"
+    }],
     date: Date,
     members: [{type: Schema.Types.ObjectId, ref: "User"}],
     maxMembersCount: Number,

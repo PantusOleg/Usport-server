@@ -2,7 +2,9 @@
   <dictionary name="Olezha">
     <words>
       <w>bcrypt</w>
+      <w>cloudinary</w>
       <w>dotenv</w>
+      <w>multer</w>
       <w>nodemailer</w>
       <w>usport</w>
       <w>virtuals</w>

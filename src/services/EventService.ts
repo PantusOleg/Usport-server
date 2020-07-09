@@ -1,44 +1,45 @@
-import {BaseService} from "./BaseService"
 import {Request, Response} from "express"
-import {errorRes, successRes} from "../utils/utils"
+import {errorRes, successRes, warningRes} from "../utils/utils"
 import {EventModel} from "../models/Event"
 import {validationResult} from "express-validator"
 import {ReqWithUserId} from "../middlewares/checkAuth"
 
-class EventService implements BaseService {
-    getById = (req: Request, res: Response) => {
-        const {id, withCreator} = req.body
-
-        EventModel.findById(id, (err, event) => {
+export default class EventService {
+    getById = (req: Request, res: Response) =>
+        EventModel.findById(req.body.id).populate(["creator", "attachments"]).exec((err, event) => {
             if (err || !event) return errorRes(res, 404, "Event is not found")
-            if (withCreator) return event.populate("creator")
-                .execPopulate().then(event => successRes(res, event))
 
             successRes(res, event)
         })
-    }
-    create = async (req: Request, res: Response) => {
+
+    getByMember = (req: Request, res: Response) =>
+        EventModel.find({members: req.body.memberId}).populate(["creator", "attachments"])
+            .exec((err, events) => {
+                if (err || events.length <= 0) return warningRes(res, "No events")
+
+                successRes(res, events)
+            })
+
+    create = async (req: ReqWithUserId, res: Response) => {
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, errors.array()[0].msg)
-
-        const newEvent = {
-            creator: req.body.creator,
-            title: req.body.title,
-            description: req.body.description,
-            location: req.body.location,
-            sports: req.body.sports,
-            filterMembers: req.body.filterMembers,
-            photo: req.body.photo,
-            date: req.body.date,
-            members: req.body.members,
-            maxMembersCount: req.body.maxMembersCount
-        }
+        if (!errors.isEmpty()) return warningRes(res, errors.array()[0].msg)
 
         try {
-            const event = await new EventModel(newEvent).save()
+            await new EventModel({
+                creator: req.userId,
+                title: req.body.title,
+                description: req.body.description,
+                location: req.body.location,
+                sports: req.body.sports,
+                filterMembers: req.body.filterMembers,
+                date: req.body.date,
+                members: req.body.members,
+                maxMembersCount: req.body.maxMembersCount,
+                attachments: req.body.attachments
+            }).save()
 
-            successRes(res, event)
+            successRes(res, undefined, "Event is created")
 
             //TODO: Send a notifications to members
         } catch (err) {
@@ -46,35 +47,27 @@ class EventService implements BaseService {
         }
     }
 
-    delete = (req: ReqWithUserId, res: Response) => {
-        console.log(req.userId)
-        const {id} = req.body
-        const userId = req.userId
-
-        EventModel.findById(id, (err, event) => {
+    delete = (req: ReqWithUserId, res: Response) =>
+        EventModel.findById(req.body.id, (err, event) => {
             if (err || !event) return errorRes(res, 404, "Event is not found")
-            if (event.creator.toString() !== userId.toString())
+
+            if (event.creator.toString() !== req.userId.toString())
                 return errorRes(res, 403, "You haven't permission to delete this event")
 
             event.remove()
                 .then(() => successRes(res, null, "User is deleted"))
-                .catch(err => errorRes(res, 404, err.message || err))
+                .catch(err => warningRes(res, err.message || err))
         })
-    }
 
     update = (req: Request, res: Response) => {
         const errors = validationResult(req)
 
-        if (!errors.isEmpty()) return errorRes(res, 422, errors.array()[0].msg)
+        if (!errors.isEmpty()) return warningRes(res, errors.array()[0].msg)
 
-        const event = req.body
-
-        EventModel.findByIdAndUpdate(event.id, {...event},{new: true}, (err, event) => {
-            if (err || !event) return errorRes(res, 404, "Event is not found")
+        EventModel.findByIdAndUpdate(req.body.id, {...req.body}, {new: true}, (err, event) => {
+            if (err || !event) return errorRes(res, 403, "Event is not found")
 
             successRes(res, event)
         })
     }
 }
-
-export default EventService
