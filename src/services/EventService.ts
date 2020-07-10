@@ -70,4 +70,15 @@ export default class EventService {
             successRes(res, event)
         })
     }
+
+    likeOrUnlike = (req: Request, res: Response) =>
+        EventModel.findById(req.body.id, (err, event) => {
+            if (err || !event) return errorRes(res, 404, "Event is not found")
+
+            event.updateOne({
+                likesCount: event.isLiked ? event.likesCount - 1 : event.likesCount + 1,
+                isLiked: !event.isLiked
+            }).then(updated => successRes(res, null, updated.isLiked ? "Event is liked" : "Event is unliked"))
+                .catch(err => warningRes(res, "Can't like or unlike event"))
+        })
 }

@@ -1,10 +1,10 @@
+import express, {Application, Request, Response} from "express"
 import UserService from "../services/UserService"
 import EventService from "../services/EventService"
-import express, {Application} from "express"
+import FileService from "../services/FileService"
 import {loginValidation, registerValidation, updateValidation} from "../utils/validations/userValidation"
 import {checkAuth, ReqWithUserId} from "../middlewares/checkAuth"
 import {eventValidation} from "../utils/validations/eventValidation"
-import FileService from "../services/FileService";
 
 export function useRoutes(app: Application) {
     app.use(express.json({limit: "30mb"}))
@@ -21,10 +21,11 @@ export function useRoutes(app: Application) {
 
     app.post("/api/event/getById", Event.getById)
     app.post("/api/event/getByMember", Event.getByMember)
-    app.post("/api/event/create", eventValidation, (req: express.Request, res: express.Response) =>
+    app.post("/api/event/create", eventValidation, (req: Request, res: Response) =>
         Event.create(req as ReqWithUserId, res))
     app.post("/api/event/delete", (req, res) => Event.delete(req as ReqWithUserId, res))
     app.post("/api/event/update", eventValidation, Event.update)
+    app.post("/api/event/likeOrUnlike", Event.likeOrUnlike)
 
     app.post("/api/file/create", (req, res) => FileService.create(req as ReqWithUserId, res))
     app.post("/api/file/delete", (req, res) => FileService.delete(req as ReqWithUserId, res))

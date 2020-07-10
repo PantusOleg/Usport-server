@@ -14,9 +14,10 @@ interface IEvent extends Document {
         longitudeDelta: number
     }
     sports?: Array<Sports>
+    isLiked: boolean
     likesCount: number
     filterMembers: boolean
-    attachments?: Array<string| IFile>
+    attachments?: Array<string | IFile>
     date: Date
     members?: Array<string | IUser>
     maxMembersCount?: number
@@ -45,6 +46,10 @@ const EventSchema = new Schema<IEvent>({
         required: isRequired("Location")
     },
     sports: [Number],
+    isLiked: {
+        type: Boolean,
+        default: false
+    },
     likesCount: {
         type: Number,
         default: 0

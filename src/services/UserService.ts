@@ -27,18 +27,17 @@ export default class UserService {
             if (users.length > 0) return warningRes(res, "This username is already used")
         })
 
-        const newUser = {
-            email: req.body.email,
-            userName: req.body.userName,
-            fullName: req.body.fullName,
-            sports: req.body.sports,
-            password: req.body.password,
-            birthDate: req.body.birthDate,
-            avatar: req.body.avatar
-        }
-
         try {
-            const user = await new UserModel(newUser).save()
+            const user = await new UserModel({
+                email: req.body.email,
+                userName: req.body.userName,
+                fullName: req.body.fullName,
+                sports: req.body.sports,
+                password: req.body.password,
+                birthDate: req.body.birthDate,
+                avatar: req.body.avatar
+            }).save()
+
             const token = createToken(user.id)
 
             successRes(res, {user, token})
@@ -58,9 +57,9 @@ export default class UserService {
             if (await UserModel.comparePasswords(user.id, req.body.password)) {
                 try {
                     await user.remove()
-                    return successRes(res, null, "User is deleted")
+                    successRes(res, null, "User is deleted")
                 } catch (err) {
-                    return warningRes(res, err.message || err)
+                    warningRes(res, err.message || err)
                 }
             } else warningRes(res, "Please enter correct password")
         })
@@ -99,19 +98,4 @@ export default class UserService {
                 warningRes(res, "Incorrect email or password")
         })
     }
-
-    /*setAvatar = (req: ReqWithUserId, res: Response) =>
-        UserModel.findById(req.query.userId, async (err, user) => {
-            if (err || !user) return errorRes(res, 403, "User is not found")
-
-            if (req.userId.toString() !== user.id.toString())
-                return errorRes(res, 404, "You haven't permission to set avatar")
-
-            const fileId = await FileService.create(req, res)
-
-            user.updateOne({avatar: fileId}, err => {
-                if (err) return errorRes(res, 500, err.message)
-                successRes(res, null, "Avatar is set")
-            })
-        })*/
 }
