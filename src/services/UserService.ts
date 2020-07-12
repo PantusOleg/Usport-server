@@ -70,7 +70,7 @@ export default class UserService {
 
         if (!errors.isEmpty()) return warningRes(res, errors.array()[0].msg)
 
-        UserModel.findByIdAndUpdate(req.body.id, {...req.body}, (err, newUser) => {
+        UserModel.findByIdAndUpdate(req.body._id, {...req.body}, (err, newUser) => {
             if (err || !newUser) return errorRes(res, 404, "User not found or not updated")
 
             successRes(res, newUser)

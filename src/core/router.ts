@@ -2,9 +2,11 @@ import express, {Application, Request, Response} from "express"
 import UserService from "../services/UserService"
 import EventService from "../services/EventService"
 import FileService from "../services/FileService"
+import TrainingService from "../services/TrainingService"
 import {loginValidation, registerValidation, updateValidation} from "../utils/validations/userValidation"
 import {checkAuth, ReqWithUserId} from "../middlewares/checkAuth"
 import {eventValidation} from "../utils/validations/eventValidation"
+import {trainingValidation} from "../utils/validations/trainingValidation";
 
 export function useRoutes(app: Application) {
     app.use(express.json({limit: "30mb"}))
@@ -12,6 +14,7 @@ export function useRoutes(app: Application) {
 
     const User = new UserService()
     const Event = new EventService()
+    const Training = new TrainingService()
 
     app.post("/api/user/get", User.getById)
     app.post("/api/user/create", registerValidation, User.create)
@@ -29,6 +32,11 @@ export function useRoutes(app: Application) {
 
     app.post("/api/file/create", (req, res) => FileService.create(req as ReqWithUserId, res))
     app.post("/api/file/delete", (req, res) => FileService.delete(req as ReqWithUserId, res))
+
+    app.post("/api/training/get", Training.getById)
+    app.post("/api/training/create", trainingValidation, Training.create)
+    app.post("/api/training/delete", (req, res) => Training.delete(req as ReqWithUserId, res))
+    app.post("/api/training/update", trainingValidation, Training.update)
 
     return app
 }

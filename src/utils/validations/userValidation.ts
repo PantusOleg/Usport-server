@@ -18,17 +18,17 @@ const checkMainUserInfo = () => {
     ]
 }
 
-const userValidation = checkMainUserInfo()
+const mainValidation = checkMainUserInfo()
 
 export const registerValidation = [
-    ...userValidation,
+    ...mainValidation,
     check("password").notEmpty().isString().isLength({min: 6, max: 15})
         .withMessage("Password should be a string more than 6 and less than 15 symbols"),
     check("sports").notEmpty().isArray().withMessage("Sports should be an array of numbers"),
 ]
 
 export const updateValidation = [
-    ...userValidation,
+    ...mainValidation,
     check("confirmed").custom(confirmed => {
         if (!isBoolean(confirmed.toString())) return Promise.reject("Confirmed must to be boolean")
         else return true
