@@ -1,16 +1,25 @@
-import {Request, Response} from "express"
-import {errorRes, successRes, warningRes} from "../utils/utils"
 import {TrainingModel} from "../models/Training"
-import {ReqWithUserId} from "../middlewares/checkAuth"
 import {validationResult} from "express-validator"
+import {errorRes, successRes, warningRes} from "../utils/utils"
+import {Request, Response} from "express"
+import {ReqWithUserId} from "../middlewares/checkAuth"
 
 export default class TrainingService {
+
     getById = (req: Request, res: Response) =>
         TrainingModel.findById(req.body.id, (err, training) => {
             if (err || !training) return warningRes(res, "Training is not found")
 
             successRes(res, training)
         })
+
+    getByCreator = (req: Request, res: Response) =>
+        TrainingModel.find({creator: req.body.creator}).populate(["creator", "attachments"])
+            .exec((err, trainings) => {
+                if (err || trainings.length === 0) return warningRes(res, "No trainings")
+
+                successRes(res, trainings)
+            })
 
     create = async (req: Request, res: Response) => {
         const errors = validationResult(req)
@@ -19,8 +28,10 @@ export default class TrainingService {
 
         new TrainingModel({
             creator: req.body.creator,
+            name: req.body.name,
             exercises: req.body.exercises,
-            attachments: req.body.attachments
+            attachments: req.body.attachments,
+            sports: req.body.sports
         }).save()
             .then(training => successRes(res, training))
             .catch(() => warningRes(res, "Can't create training"))

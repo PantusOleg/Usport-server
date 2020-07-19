@@ -1,9 +1,10 @@
-import {Document, model, Schema} from "mongoose"
+import {model, Schema} from "mongoose"
 import {isRequired} from "../utils/utils"
 import {IUser, Sports} from "./User"
 import {IFile} from "./File"
+import {DocWithTimeStamps} from "../types";
 
-interface IEvent extends Document {
+interface IEvent extends DocWithTimeStamps {
     creator: IUser
     title: string
     description: string

@@ -78,7 +78,8 @@ export default class EventService {
             event.updateOne({
                 likesCount: event.isLiked ? event.likesCount - 1 : event.likesCount + 1,
                 isLiked: !event.isLiked
-            }).then(updated => successRes(res, null, updated.isLiked ? "Event is liked" : "Event is unliked"))
-                .catch(err => warningRes(res, "Can't like or unlike event"))
+            })
+                .then(updated => successRes(res, null, updated.isLiked ? "Event is liked" : "Event is unliked"))
+                .catch(() => warningRes(res, "Can't like or unlike event"))
         })
 }

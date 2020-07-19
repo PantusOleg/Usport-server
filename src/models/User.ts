@@ -11,7 +11,7 @@ interface UserSchema extends Document {
     avatar?: string
     fullName: string
     about: string
-    sports: Array<Sports>
+    sports: Sports[]
     password: string
     lastSeen: Date
     isOnline: boolean
