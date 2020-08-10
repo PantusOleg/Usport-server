@@ -8,8 +8,10 @@ export default class FileService {
 
     static create = async (req: ReqWithUserId, res: Response) => {
         try {
-            const result = await cloudinary.v2.uploader.upload(`data:${req.body.type};base64,${req.body.base64}`, {
-                resource_type: "auto"
+            const {type, base64} = req.body
+
+            const result = await cloudinary.v2.uploader.upload(`data:${type};base64,${base64}`, {
+                resource_type: "auto", folder: req.userId
             })
 
             if (!result) return warningRes(res, "Server can't upload file")
@@ -17,7 +19,8 @@ export default class FileService {
             await new FileModel({
                 uri: result.url,
                 public_id: result.public_id,
-                type: req.body.type,
+                type,
+                hwRatio: result.height / result.width,
                 creator: req.userId,
             }).save((err, file) => {
                 if (err || !file) return warningRes(res, "Can't save file")
@@ -25,22 +28,22 @@ export default class FileService {
                 successRes(res, file)
             })
         } catch (err) {
-            warningRes(res, "Server can't upload file")
+            warningRes(res, err.message)
         }
     }
 
     static delete = (req: ReqWithUserId, res: Response) =>
-        FileModel.findById(req.body.id, (err, file) => {
+        FileModel.findById(req.params.id, (err, file) => {
             if (err || !file) return errorRes(res, 403, "File is not found")
 
-            cloudinary.v2.uploader.destroy(req.body.public_id).then(() => {
-                if (req.userId.toString() === file.creator.toString())
+            if (req.userId.toString() === file.creator.toString()) {
+                cloudinary.v2.uploader.destroy(file.public_id).then(() => {
                     file.remove()
                         .then(() => successRes(res, null, "File is deleted"))
                         .catch(err => errorRes(res, 500, err.message))
-
-                else errorRes(res, 403, "You haven't permission to this action")
-            }).catch(() => warningRes(res, "Can't delete file"))
+                }).catch(() => warningRes(res, "Can't delete file"))
+            } else
+                errorRes(res, 403, "You haven't permission to this action")
         })
 
 }

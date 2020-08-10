@@ -1,41 +1,12 @@
-import mongoose, {Document, Model, Schema} from "mongoose"
+import {model, Schema} from "mongoose"
 import validator from "validator"
 import bcrypt from "bcrypt"
 import {generateHash, isRequired} from "../utils/utils"
 import {differenceInMinutes} from "date-fns"
 import isEmail = validator.isEmail
+import {IUser, UserSchema, IUserModel} from "../types"
 
-interface UserSchema extends Document {
-    email: string
-    userName: string
-    avatar?: string
-    fullName: string
-    about: string
-    sports: Sports[]
-    password: string
-    lastSeen: Date
-    isOnline: boolean
-    confirmed: boolean
-    confirmHash?: string
-    birthDate: Date
-}
-
-export enum Sports {
-    VOLLEYBALL,
-    BASKETBALL,
-    FOOTBALL,
-    TENNIS
-}
-
-export interface IUser extends UserSchema {
-    isOnline: boolean
-}
-
-interface IUserModel extends Model<IUser> {
-    comparePasswords(id: string, password: string): Promise<boolean>
-}
-
-const UserSchema = new Schema<IUser>({
+const UserSchema = new Schema<UserSchema>({
     email: {
         type: String,
         required: isRequired("Email"),
@@ -52,6 +23,9 @@ const UserSchema = new Schema<IUser>({
         type: String,
         required: isRequired("Full name")
     },
+    friends: [{
+        type: Schema.Types.ObjectId, ref: "User", select: false
+    }],
     about: {
         type: String,
         maxlength: 100
@@ -66,10 +40,12 @@ const UserSchema = new Schema<IUser>({
         type: Date,
         default: Date.now
     },
-    confirmed: {
-        type: Boolean,
-        default: false
-    },
+    savedEvents: [{
+        type: Schema.Types.ObjectId, ref: "Event", select: false
+    }],
+    savedTrainings: [{
+        type: Schema.Types.ObjectId, ref: "Training", select: false
+    }],
     confirmHash: String,
     birthDate: {
         type: Date,
@@ -77,13 +53,21 @@ const UserSchema = new Schema<IUser>({
     },
 }, {versionKey: false})
 
+UserSchema.virtual("confirmed").get(function (this: UserSchema) {
+    return !this.confirmHash
+})
+
 UserSchema.virtual("isOnline").get(function (this: UserSchema) {
     return differenceInMinutes(Date.now(), this.lastSeen) < 5
 })
 
+UserSchema.virtual("friendsCount").get(function (this: UserSchema) {
+    return this.friends.length
+})
+
 UserSchema.set("toJSON", {virtuals: true})
 
-UserSchema.pre<IUser>("save", async function (next) {
+UserSchema.pre<UserSchema>("save", async function (next) {
 
     if (!this.isModified("password")) return next()
 
@@ -95,6 +79,10 @@ UserSchema.pre<IUser>("save", async function (next) {
     }
 })
 
+UserSchema.statics.findWithSaved = async function (id: string) {
+    return await this.findById(id).select("savedEvents").select("savedTrainings")
+}
+
 UserSchema.statics.comparePasswords = async function (id: string, inputPassword: string) {
     try {
         const {password} = await this.findById(id).select("password")
@@ -104,4 +92,4 @@ UserSchema.statics.comparePasswords = async function (id: string, inputPassword:
     }
 }
 
-export const UserModel = mongoose.model<IUser, IUserModel>("User", UserSchema)
+export const UserModel = model<IUser, IUserModel>("User", UserSchema)

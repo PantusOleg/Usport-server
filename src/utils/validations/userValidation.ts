@@ -10,6 +10,7 @@ const checkMainUserInfo = () => {
             .withMessage("User name should be a string more than 5 and less than 15 symbols"),
         check("fullName").notEmpty().isString().isLength({min: 5, max: 22})
             .withMessage("Full name should be a string more than 5 and less than 20 symbols"),
+        check("avatar").optional().isString(),
 
         check("birthDate").notEmpty().custom(birthDate => {
             if (!(new Date(birthDate) instanceof Date)) return Promise.reject("Birth date is not correct")
@@ -30,14 +31,13 @@ export const registerValidation = [
 export const updateValidation = [
     ...mainValidation,
     check("confirmed").custom(confirmed => {
-        if (!isBoolean(confirmed.toString())) return Promise.reject("Confirmed must to be boolean")
+        if (!isBoolean(confirmed.toString())) return Promise.reject("Confirmed should be boolean")
         else return true
     }),
-    check("about").custom(about => {
-        if (about && typeof about !== "string" && about.trim().length <= 100)
-            return Promise.reject("About field must to be string less that 100")
-        else return true
-    })
+    check("about").optional().isString().isLength({min: 0, max: 300})
+        .withMessage("About field must to be string less that 300"),
+    check("savedEvents").optional().isArray(),
+    check("savedTrainings").optional().isArray()
 ]
 
 export const loginValidation = [

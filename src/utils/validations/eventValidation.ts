@@ -1,10 +1,10 @@
 import {check} from "express-validator"
 
 export const eventValidation = [
-    check("title").notEmpty().isString().isLength({min: 5, max: 100})
-        .withMessage("Title should be a string with length 5-100 symbols"),
-    check("description").notEmpty().isString().isLength({min: 5, max: 200})
-        .withMessage("Description should be a string with length 5-100 symbols"),
+    check("title").notEmpty().isString().isLength({min: 5, max: 150})
+        .withMessage("Title should be a string with length 5-150 symbols"),
+    check("description").notEmpty().isString().isLength({min: 5, max: 300})
+        .withMessage("Description should be a string with length 5-300 symbols"),
     check("location").notEmpty().custom(location => {
         const {latitude, longitude, latitudeDelta, longitudeDelta} = location
 

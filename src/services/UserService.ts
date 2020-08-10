@@ -1,24 +1,42 @@
-import {Request, Response} from "express"
+import BaseService from "./BaseService"
 import {UserModel} from "../models/User"
+import {EventModel} from "../models/Event"
+import ChatService from "./ChatService"
+import {IUser} from "../types"
+import {Request, Response} from "express"
 import {errorRes, successRes, warningRes} from "../utils/utils"
+import {ReqWithUserId} from "../middlewares/checkAuth"
 import {validationResult} from "express-validator"
 import {createToken} from "../utils/jwtControl"
 
-export default class UserService {
+export default class UserService extends BaseService<IUser> {
 
-    getById = (req: Request, res: Response) =>
-        UserModel.findById(req.body.id, (err, user) => {
-            if (err || !user) return warningRes(res, "User is not found")
+    constructor() {
+        super("User", UserModel, [], req => ({
+            email: req.body.email,
+            userName: req.body.userName,
+            fullName: req.body.fullName,
+            sports: req.body.sports,
+            password: req.body.password,
+            birthDate: req.body.birthDate,
+            avatar: req.body.avatar
+        }))
+    }
 
-            successRes(res, user)
+    getSaved = (req: Request, res: Response) =>
+        UserModel.findWithSaved(req.params.id)
+            .then(user => successRes(res, {
+                savedEvents: user.savedEvents,
+                savedTrainings: user.savedTrainings
+            }))
+            .catch(err => errorRes(res, 500, err.message))
+
+    isFriend = (req: ReqWithUserId, res: Response) =>
+        UserModel.find({_id: req.params.id, friends: [req.userId]}, (err, user) => {
+            successRes(res, {isFriend: !!(!err && user)})
         })
 
-    create = async (req: Request, res: Response) => {
-
-        const errors = validationResult(req)
-
-        if (!errors.isEmpty()) return warningRes(res, errors.array()[0].msg)
-
+    create = (req: ReqWithUserId, res: Response) => this.Create(req, res, () => {
         UserModel.find({email: req.body.email}, (err, users) => {
             if (users.length > 0) return warningRes(res, "This email is already used")
         })
@@ -26,56 +44,15 @@ export default class UserService {
         UserModel.find({userName: req.body.userName}, (err, users) => {
             if (users.length > 0) return warningRes(res, "This username is already used")
         })
+    })
 
-        try {
-            const user = await new UserModel({
-                email: req.body.email,
-                userName: req.body.userName,
-                fullName: req.body.fullName,
-                sports: req.body.sports,
-                password: req.body.password,
-                birthDate: req.body.birthDate,
-                avatar: req.body.avatar
-            }).save()
+    delete = (req: ReqWithUserId, res: Response) => this.Delete(req, res,
+        user => req.userId.toString() === user._id.toString(),
+        async (user) => {
+            await EventModel.deleteMany({creator: user._id})
 
-            const token = createToken(user.id)
-
-            successRes(res, {user, token})
-
-            //sendVerifyMessage(user.email, user.confirmHash)
-        } catch (err) {
-            return errorRes(res, 500, "Can't create user. Try again!")
-        }
-    }
-
-    delete = (req: Request, res: Response) => {
-        if (!req.body.password) return errorRes(res, 403, "Enter correct password")
-
-        UserModel.findById(req.body.id, async (err, user) => {
-            if (err || !user) return errorRes(res, 404, "User is not found")
-
-            if (await UserModel.comparePasswords(user.id, req.body.password)) {
-                try {
-                    await user.remove()
-                    successRes(res, null, "User is deleted")
-                } catch (err) {
-                    warningRes(res, err.message || err)
-                }
-            } else warningRes(res, "Please enter correct password")
+            await ChatService.leaveAll(user._id)
         })
-    }
-
-    update = (req: Request, res: Response) => {
-        const errors = validationResult(req)
-
-        if (!errors.isEmpty()) return warningRes(res, errors.array()[0].msg)
-
-        UserModel.findByIdAndUpdate(req.body._id, {...req.body}, (err, newUser) => {
-            if (err || !newUser) return errorRes(res, 404, "User not found or not updated")
-
-            successRes(res, newUser)
-        })
-    }
 
     login = (req: Request, res: Response) => {
         const errors = validationResult(req)
@@ -97,5 +74,23 @@ export default class UserService {
             } else
                 warningRes(res, "Incorrect email or password")
         })
+    }
+
+    addRemoveFriend = async (req: ReqWithUserId, res: Response, type: "add" | "remove") => {
+        const user = await UserModel.findById(req.body.id).select("friends")
+
+        if (user) {
+
+            /*if (type === "add" && user.friends.find(f => f === req.userId))
+                return warningRes(res, "You can't add friend twice")*/
+
+            await user.updateOne({
+                friends: type === "add"
+                    ? [...user.friends, req.userId]
+                    : user.friends.filter(f => f !== req.userId)
+            })
+        } else return errorRes(res, 400, "User is not found")
+
+        successRes(res)
     }
 }

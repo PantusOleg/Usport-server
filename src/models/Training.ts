@@ -1,20 +1,19 @@
 import mongoose from "mongoose"
 import {isRequired} from "../utils/utils"
-import {IUser} from "./User"
 import {IFile} from "./File"
-import {DocWithTimeStamps} from "../types"
+import {DocWithTimeStamps, IUser} from "../types"
 
 export interface ITraining extends DocWithTimeStamps {
     creator: IUser | string
     name: string
     exercises: {
-        name: String,
-        timesCount: Number,
-        minutesToDo: Number
+        name: string
+        timesCount: number
+        minutesToDo: number
+        tempo: 0 | 1 | 2
     }[]
     attachments: IFile[]
     sports: number[]
-    tempo: 0 | 1 | 2
 }
 
 const Tempo = [0, 1, 2]

@@ -6,21 +6,18 @@ export const trainingValidation = [
         .withMessage("Name should be a string 5-200 symbols length"),
     check("exercises").notEmpty().isArray(),
     check("attachments").isArray(),
-    check("sports").isArray(),
-    check("tempo").isNumeric()
+    check("sports").isArray()
 ]
 
 export const chatValidation = [
     check("members").isArray(),
-    check("photo").isString(),
-    check("dialogs").isArray()
-]
-
-export const dialogValidation = [
-    check(["name", "goal"]).isString()
+    check("lastMessage").isString(),
+    check("photo").optional().isString()
 ]
 
 export const messageValidation = [
-    check(["dialog", "text", "chat"]).isString(),
-    check("attachments").isArray()
+    check("chat").isString(),
+    check("text").optional().isString().isLength({min: 0, max: 300})
+        .withMessage("Max length is 300"),
+    check("attachments").optional().isArray()
 ]

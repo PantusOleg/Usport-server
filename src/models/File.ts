@@ -6,6 +6,8 @@ export interface IFile extends Document {
     public_id: string
     creator: string
     type: "image/jpg" | "video/mp4"
+    //ratio of height to width
+    hwRatio: number
 }
 
 const FileSchema = new Schema<IFile>({
@@ -21,10 +23,8 @@ const FileSchema = new Schema<IFile>({
         type: String,
         required: isRequired("Type")
     },
-    creator: {
-        type: Schema.Types.ObjectId, ref: "User",
-        required: isRequired("Creator")
-    }
+    creator: String,
+    hwRatio: Number
 }, {versionKey: false})
 
 export const FileModel = mongoose.model<IFile>("File", FileSchema)

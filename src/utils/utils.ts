@@ -19,7 +19,7 @@ export const successRes = (res: Response, data?: any, message?: string) => {
     if (data) obj.data = data
     if (message) obj.message = message
 
-    res.json(obj)
+    res.status(200).json(obj)
 }
 
 export const isRequired = (val: string) => `${val} is required`

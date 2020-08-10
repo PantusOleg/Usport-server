@@ -1,11 +1,10 @@
 import {model, Schema} from "mongoose"
 import {isRequired} from "../utils/utils"
-import {IUser, Sports} from "./User"
 import {IFile} from "./File"
-import {DocWithTimeStamps} from "../types";
+import {DocWithTimeStamps, IUser, Sports} from "../types"
 
-interface IEvent extends DocWithTimeStamps {
-    creator: IUser
+export interface IEvent extends DocWithTimeStamps {
+    creator: string | IUser
     title: string
     description: string
     location: {
@@ -14,13 +13,11 @@ interface IEvent extends DocWithTimeStamps {
         latitudeDelta: number
         longitudeDelta: number
     }
-    sports?: Array<Sports>
-    isLiked: boolean
-    likesCount: number
-    filterMembers: boolean
-    attachments?: Array<string | IFile>
+    sports?: Sports[]
+    private: boolean
+    attachments?: (string | IFile)[]
     date: Date
-    members?: Array<string | IUser>
+    members: (string | IUser)[]
     maxMembersCount?: number
 }
 
@@ -47,19 +44,17 @@ const EventSchema = new Schema<IEvent>({
         required: isRequired("Location")
     },
     sports: [Number],
-    isLiked: {
-        type: Boolean,
-        default: false
-    },
-    likesCount: {
-        type: Number,
-        default: 0
-    },
-    filterMembers: Boolean,
     attachments: [{
         type: Schema.Types.ObjectId, ref: "File"
     }],
-    date: Date,
+    date: {
+        type: Date,
+        default: Date.now()
+    },
+    private: {
+        type: Boolean,
+        default: false
+    },
     members: [{type: Schema.Types.ObjectId, ref: "User"}],
     maxMembersCount: Number,
 }, {timestamps: true, versionKey: false})

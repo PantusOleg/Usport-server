@@ -9,13 +9,12 @@ import MessageService from "../services/MessageService"
 
 import {loginValidation, registerValidation, updateValidation} from "../utils/validations/userValidation"
 import {eventValidation} from "../utils/validations/eventValidation"
-import {
-    chatValidation, dialogValidation, messageValidation, trainingValidation
-} from "../utils/validations/otherValidation"
+import {chatValidation, messageValidation, trainingValidation} from "../utils/validations/otherValidation"
 
 import {checkAuth, ReqWithUserId} from "../middlewares/checkAuth"
+import {Server} from "socket.io"
 
-export function useRoutes(app: Application) {
+export function useRoutes(app: Application, io: Server) {
     app.use(json({limit: "30mb"}))
     app.use((req, res, next) => checkAuth(req as ReqWithUserId, res, next))
 
@@ -23,42 +22,45 @@ export function useRoutes(app: Application) {
     const Event = new EventService()
     const Training = new TrainingService()
     const Chat = new ChatService()
-    const Message = new MessageService()
+    const Message = new MessageService(io)
 
-    app.post("/api/user/get", User.getById)
-    app.post("/api/user/create", registerValidation, User.create)
-    app.post("/api/user/delete", User.delete)
-    app.post("/api/user/update", updateValidation, User.update)
-    app.post("/api/user/login", loginValidation, User.login)
+    app.post("/login", loginValidation, User.login)
 
-    app.post("/api/event/getById", Event.getById)
-    app.post("/api/event/getByMember", Event.getByMember)
-    app.post("/api/event/create", eventValidation, (req: Request, res: Response) => Event.create(req as ReqWithUserId, res))
-    app.post("/api/event/delete", (req, res) => Event.delete(req as ReqWithUserId, res))
-    app.post("/api/event/update", eventValidation, Event.update)
-    app.post("/api/event/likeOrUnlike", Event.likeOrUnlike)
+    app.get("/user/get/:id", User.get)
+    app.get("/user/saved/:id", User.getSaved)
+    app.get("/user/isFriend/:id", (req, res) => User.isFriend(req as ReqWithUserId, res))
+    app.post("/user", registerValidation, (req: Request, res: Response) => User.create(req as ReqWithUserId, res))
+    app.post("/user/addFriend", (req, res) => User.addRemoveFriend(req as ReqWithUserId, res, "add"))
+    app.post("/user/removeFriend", (req, res) => User.addRemoveFriend(req as ReqWithUserId, res, "remove"))
+    app.delete("/user/:id", (req, res) => User.delete(req as ReqWithUserId, res))
+    app.put("/user", updateValidation, User.Update)
 
-    app.post("/api/file/create", (req, res) => FileService.create(req as ReqWithUserId, res))
-    app.post("/api/file/delete", (req, res) => FileService.delete(req as ReqWithUserId, res))
+    app.get("/event/get/:id", Event.get)
+    app.get("/event/byMember/:member", Event.getByMember)
+    app.post("/event", eventValidation, (req: Request, res: Response) => Event.Create(req as ReqWithUserId, res))
+    app.delete("/event/:id", (req, res) => Event.Delete(req as ReqWithUserId, res))
+    app.put("/event", eventValidation, Event.Update)
 
-    app.post("/api/training/get", Training.getById)
-    app.post("/api/training/getByCreator", Training.getByCreator)
-    app.post("/api/training/create", trainingValidation, Training.create)
-    app.post("/api/training/delete", (req, res) => Training.delete(req as ReqWithUserId, res))
-    app.post("/api/training/update", trainingValidation, Training.update)
+    app.post("/file", (req, res) => FileService.create(req as ReqWithUserId, res))
+    app.delete("/file/:id", (req, res) => FileService.delete(req as ReqWithUserId, res))
 
-    app.post("/api/chat/get", Chat.getById)
-    app.post("/api/chat/getMyChats", (req, res) => Chat.getMyChats(req as ReqWithUserId, res))
-    app.post("/api/chat/create", chatValidation, Chat.create)
-    app.post("/api/chat/createDialog", dialogValidation, Chat.createDialog)
-    app.post("/api/chat/leave", (req, res) => Chat.leave(req as ReqWithUserId, res))
-    app.post("/api/chat/update", chatValidation, Chat.update)
+    app.get("/training/get/:id", Training.get)
+    app.get("/training/byCreator/:creator", Training.getByCreator)
+    app.post("/training", trainingValidation, (req: Request, res: Response) => Training.Create(req as ReqWithUserId, res))
+    app.delete("/training/:id", (req, res) => Training.Delete(req as ReqWithUserId, res))
+    app.put("/training", trainingValidation, Training.Update)
 
-    app.post("/api/message/get", Message.getById)
-    app.post("/api/message/getByDialog", Message.getByDialog)
-    app.post("/api/message/create", messageValidation, (req: Request, res: Response) => Message.create(req as ReqWithUserId, res))
-    app.post("/api/message/delete", (req, res) => Message.delete(req as ReqWithUserId, res))
-    app.post("/api/message/update", messageValidation, Message.update)
+    app.get("/chat/get/:id", Chat.get)
+    app.get("/chat/my", (req, res) => Chat.getMyChats(req as ReqWithUserId, res))
+    app.post("/chat", chatValidation, (req: Request, res: Response) => Chat.Create(req as ReqWithUserId, res))
+    app.delete("/chat/leave/:id", (req, res) => Chat.leave(req as ReqWithUserId, res))
+    app.put("/chat", chatValidation, Chat.Update)
+
+    app.get("/message/get/:id", Message.get)
+    app.get("/message/byChat/:chat", Message.getByChat)
+    app.post("/message", messageValidation, (req: Request, res: Response) => Message.create(req as ReqWithUserId, res))
+    app.delete("/message/:id", (req, res) => Message.delete(req as ReqWithUserId, res))
+    app.put("/message", messageValidation, Message.update)
 
     return app
 }
